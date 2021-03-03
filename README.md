@@ -2,7 +2,7 @@
 
 浙大nCov肺炎健康打卡定时自动脚本
 
- - 可定时，默认为每天6点5分
+ - 可给定锚点时间，默认为每天8点15分，实际打卡时间在锚点时间上下各浮动2小时
  - 默认每次提交上次所提交的内容（只有时间部分更新）
  - 系统表单如有更新，在当天自行手机打卡，后面会自动按照你更新后的选项继续打卡
 
@@ -26,25 +26,32 @@
     $ pip3 install -r requirements.txt
     ```
 
-3. 将config.json.templ模板文件重命名为config.json文件，并修改 config.json中的配置
+3. 启动定时自动打卡脚本
+
+* 不使用配置文件，手动输入用户名密码
+
+```bash
+$ python3 checkin.py
+```
+
+* 使用配置文件，用户名密码填入配置文件 `config.json`
   
-    ```javascript
-    {
-        "username": "你的浙大统一认证平台用户名",
-        "password": "你的浙大统一认证平台密码",
-        "schedule": {
-            "hour": "6",    // 6点
-            "minute": "5"   // 5分 
-        }
+```javascript
+{
+    "username": "你的浙大统一认证平台用户名",
+    "password": "你的浙大统一认证平台密码",
+    "schedule": {
+        "hour": "8",     // 8点
+        "minute": "15"   // 15分 
     }
-    ```
+}
+```
 
-4. 启动定时自动打卡脚本
+启动自动打卡脚本
 
-   ```bash
-   $ python3 daka.py
-   ```
-
+```bash
+$ python3 checkin.py -c
+```
 
 ## Tips
 
