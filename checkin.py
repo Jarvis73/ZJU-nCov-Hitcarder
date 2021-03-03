@@ -4,8 +4,18 @@ import time, datetime, os, sys
 import getpass
 from halo import Halo
 from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.jobstores.base import JobLookupError
+import random
+import time
+from pathlib import Path
+import argparse
 
-class DaKa(object):
+scheduler = BlockingScheduler()
+hour = 8
+minute = 15
+
+
+class CheckIn(object):
     """Hit card class
 
     Attributes:
@@ -126,16 +136,21 @@ def main(username, password):
         username: (str) 浙大统一认证平台用户名（一般为学号）
         password: (str) 浙大统一认证平台密码
     """
+    try:
+        scheduler.remove_job('checkin_ontime')
+    except JobLookupError as e:
+        pass
+
     print("\n[Time] %s" %datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     print("🚌 打卡任务启动")
     spinner = Halo(text='Loading', spinner='dots')
     spinner.start('正在新建打卡实例...')
-    dk = DaKa(username, password)
+    ci = CheckIn(username, password)
     spinner.succeed('已新建打卡实例')
 
     spinner.start(text='登录到浙大统一身份认证平台...')
     try:
-        dk.login()
+        ci.login()
         spinner.succeed('已登录到浙大统一身份认证平台')
     except Exception as err:
         spinner.fail(str(err))
@@ -143,44 +158,84 @@ def main(username, password):
 
     spinner.start(text='正在获取个人信息...')
     try:
-        dk.get_info()
-        spinner.succeed('%s %s同学, 你好~' %(dk.info['number'], dk.info['name']))
+        ci.get_info()
+        spinner.succeed('%s %s同学, 你好~' %(ci.info['number'], ci.info['name']))
     except Exception as err:
         spinner.fail('获取信息失败，请手动打卡，更多信息: ' + str(err))
         return
 
     spinner.start(text='正在为您打卡打卡打卡')
     try:
-        res = dk.post()
+        res = ci.post()
         if str(res['e']) == '0':
             spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text='已为您打卡成功！')
         else:
             spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
+
+        # Random time
+        random_time = random.randint(-120, 120) + hour * 60 + minute
+        random_hour = random_time // 60
+        random_minute = random_time % 60
+        weekday = (datetime.datetime.now().weekday() + 1) % 7
+
+        # Schedule task
+        scheduler.add_job(main, 'cron', id='checkin_ontime', args=[username, password], day_of_week=weekday, hour=random_hour, minute=random_minute)
+        print('⏰ 已启动定时程序，明天 %02d:%02d 为您打卡' %(int(random_hour), int(random_minute)))
+        print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
     except:
         spinner.fail('数据提交失败')
         return 
 
 
+def test():
+    try:
+        scheduler.remove_job('checkin_ontime')
+    except JobLookupError as e:
+        pass
+    print("\n[Time] %s" %datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    print("Run once")
+
+    # Schedule task
+    random_time = random.randint(-10, 10)
+    print(random_time)
+    hour = int(datetime.datetime.now().strftime('%H'))
+    minute = int(datetime.datetime.now().strftime('%M'))
+    if minute + 1 >= 60:
+        hour += 1
+        minute = 0
+    if hour >= 24:
+        hour = 0
+    scheduler.add_job(test, 'cron', id='checkin_ontime', hour=hour, minute=minute + 1, second=30 + random_time)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser("Auto CheckIn")
+    parser.add_argument("-c", "--config", action="store_true", help="Use config file")
+    args = parser.parse_args()
+    return args
+
+
 if __name__=="__main__":
-    if os.path.exists('./config.json'):
-        configs = json.loads(open('./config.json', 'r').read())
+    args = parse_args()
+    cfg_file = Path(__file__).parent / "config.json"
+
+    if args.config and cfg_file.exists():
+        configs = json.loads(cfg_file.read_bytes())
         username = configs["username"]
         password = configs["password"]
-        hour = configs["schedule"]["hour"]
-        minute = configs["schedule"]["minute"]
+        hour = int(configs["schedule"]["hour"])
+        minute = int(configs["schedule"]["minute"])
     else:
         username = input("👤 浙大统一认证用户名: ")
         password = getpass.getpass('🔑 浙大统一认证密码: ')
-        print("⏲  请输入定时时间（默认每天6:05）")
-        hour = input("\thour: ") or 6
-        minute = input("\tminute: ") or 5
-    main(username, password)
+        print("⏲  请输入锚点时间(默认为 8:15, 上下浮动2小时, 如 8:15 将对应 6:15-10:15 打卡):")
+        hour = input("\thour: ") or 8
+        hour = int(hour)
+        minute = input("\tminute: ") or 15
+        minute = int(minute)
 
-    # Schedule task
-    scheduler = BlockingScheduler()
-    scheduler.add_job(main, 'cron', args=[username, password], hour=hour, minute=minute)
-    print('⏰ 已启动定时程序，每天 %02d:%02d 为您打卡' %(int(hour), int(minute)))
-    print('Press Ctrl+{0} to exit'.format('Break' if os.name == 'nt' else 'C'))
+    main(username, password)
+    # test()
 
     try:
         scheduler.start()
