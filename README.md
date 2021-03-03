@@ -8,7 +8,7 @@
 
  项目用于学习交流，仅用于各项无异常时打卡，如有身体不适等情况还请自行如实打卡~
 
-<img src="https://github.com/Tishacy/ZJU-nCov-Hitcarder/raw/master/demo.png" width="500px"/>
+<img src="demo.png"/>
 
 > 感谢[conv1d](https://github.com/conv1d)同学，已使用requests直接登录浙大统一认证平台，不再依赖phantomjs
 
