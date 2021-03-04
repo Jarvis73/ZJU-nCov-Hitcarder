@@ -2,7 +2,7 @@
     "username": "",
     "password": "",
     "schedule": {
-        "hour": "8",
-        "minute": "15"
+        "hour": "0",
+        "minute": "5"
     }
 }

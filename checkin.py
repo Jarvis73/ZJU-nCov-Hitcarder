@@ -11,8 +11,8 @@ from pathlib import Path
 import argparse
 
 scheduler = BlockingScheduler()
-hour = 8
-minute = 15
+hour = 0
+minute = 5
 
 
 class CheckIn(object):
@@ -173,7 +173,7 @@ def main(username, password):
             spinner.stop_and_persist(symbol='🦄 '.encode('utf-8'), text=res['m'])
 
         # Random time
-        random_time = random.randint(-120, 120) + hour * 60 + minute
+        random_time = random.randint(0, 60) + hour * 60 + minute
         random_hour = random_time // 60
         random_minute = random_time % 60
         weekday = (datetime.datetime.now().weekday() + 1) % 7
@@ -228,10 +228,10 @@ if __name__=="__main__":
     else:
         username = input("👤 浙大统一认证用户名: ")
         password = getpass.getpass('🔑 浙大统一认证密码: ')
-        print("⏲  请输入锚点时间(默认为 8:15, 上下浮动2小时, 如 8:15 将对应 6:15-10:15 打卡):")
-        hour = input("\thour: ") or 8
+        print("⏲  请输入锚点时间(默认为 00:05, 向上浮动1小时, 如 00:05 将对应 00:05-01:05 打卡):")
+        hour = input("\thour: ") or hour
         hour = int(hour)
-        minute = input("\tminute: ") or 15
+        minute = input("\tminute: ") or minute
         minute = int(minute)
 
     main(username, password)
