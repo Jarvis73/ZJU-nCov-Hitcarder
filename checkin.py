@@ -94,6 +94,12 @@ class CheckIn(object):
         new_info["date"] = self.get_date()
         new_info["created"] = round(time.time())
         # form change
+        # -----------------------------------------------------------------------------
+        # new_info['address'] = ''                # 如: 'xx省xx市xx区xx街道xx小区'
+        # new_info['area'] = 'xx省 xx市 xx区'      # 如: '浙江省 杭州市 西湖区'  记得中间用空格隔开, 省市区/县名称可以参考 打卡页面->基本信息->家庭所在地 中对应的省市区/县名
+        # new_info['province'] = new_info['area'].split(' ')[0]   # 省名
+        # new_info['city'] = new_info['area'].split(' ')[1]       # 市名
+        # -----------------------------------------------------------------------------
         new_info['jrdqtlqk[]'] = 0
         new_info['jrdqjcqk[]'] = 0
         new_info['sfsqhzjkk'] = 1   # 是否申领杭州健康码
