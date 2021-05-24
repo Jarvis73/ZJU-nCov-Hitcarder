@@ -24,6 +24,7 @@ class CheckIn(object):
         login_url: (str) 登录url
         base_url: (str) 打卡首页url
         save_url: (str) 提交打卡url
+        self.headers: (dict) 请求头
         sess: (requests.Session) 统一的session
     """
     def __init__(self, username, password):
@@ -32,13 +33,16 @@ class CheckIn(object):
         self.login_url = "https://zjuam.zju.edu.cn/cas/login?service=https%3A%2F%2Fhealthreport.zju.edu.cn%2Fa_zju%2Fapi%2Fsso%2Findex%3Fredirect%3Dhttps%253A%252F%252Fhealthreport.zju.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex"
         self.base_url = "https://healthreport.zju.edu.cn/ncov/wap/default/index"
         self.save_url = "https://healthreport.zju.edu.cn/ncov/wap/default/save"
+        self.headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
+        }
         self.sess = requests.Session()
 
     def login(self):
         """Login to ZJU platform"""
-        res = self.sess.get(self.login_url)
+        res = self.sess.get(self.login_url, headers=self.headers)
         execution = re.search('name="execution" value="(.*?)"', res.text).group(1)
-        res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey').json()
+        res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey', headers=self.headers).json()
         n, e = res['modulus'], res['exponent']
         encrypt_password = self._rsa_encrypt(self.password, e, n)
 
@@ -48,7 +52,7 @@ class CheckIn(object):
             'execution': execution,
             '_eventId': 'submit'
         }
-        res = self.sess.post(url=self.login_url, data=data)
+        res = self.sess.post(url=self.login_url, data=data, headers=self.headers)
 
         # check if login successfully
         if '统一身份认证' in res.content.decode():
@@ -57,7 +61,7 @@ class CheckIn(object):
     
     def post(self):
         """Post the hitcard info"""
-        res = self.sess.post(self.save_url, data=self.info)
+        res = self.sess.post(self.save_url, data=self.info, headers=self.headers)
         return json.loads(res.text)
     
     def get_date(self):
@@ -68,7 +72,7 @@ class CheckIn(object):
     def get_info(self, html=None):
         """Get hitcard info, which is the old info with updated new time."""
         if not html:
-            res = self.sess.get(self.base_url)
+            res = self.sess.get(self.base_url, headers=self.headers)
             html = res.content.decode()
 
         try:
